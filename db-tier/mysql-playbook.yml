@@ -1,0 +1,61 @@
+---
+
+- hosts: all
+  gather_facts: True
+  user: vagrant
+  sudo: True
+
+  tasks:
+
+    - name: upgrade all packages
+      yum: 
+        name: '*' 
+        state: latest
+    
+    - name: Install pre-requisites
+      yum:
+        name: "{{ packages }}"
+        state: present
+      vars:
+        packages:
+        - oracle-epel-release-el7
+        - python-pip
+    
+    - name: Install pyMysql pip package
+      pip:
+        name: pymysql
+        state: present
+   
+    - name: Install mysql rpm package
+      yum:
+        name: https://dev.mysql.com/get/mysql80-community-release-el7-3.noarch.rpm
+        state: present
+    
+    - name: Install mysql server
+      yum:
+        name: mysql-community-server
+        state: present
+
+    - name: Make sure a service is running
+      systemd:
+        state: started
+        name: mysqld
+    
+    - name: get default root password
+      shell: "grep 'A temporary password is generated for root@localhost' /var/log/mysqld.log | awk -F ' ' '{print $(NF)}'"
+      register: root_password
+    
+    - name: update expired root user password
+      command: mysql --user root --password={{ root_password.stdout }} --connect-expired-password --execute="ALTER USER 'root'@'localhost' IDENTIFIED BY '{{ mysql_root_password }}';"
+  
+    # - name: create mysql client user
+    #   mysql_user:
+    #     login_user: root
+    #     login_password: "{{ mysql.root.password }}"
+    #     name: "{{ item.name }}"
+    #     password: "{{ item.password }}"
+    #     priv: '*.*:ALL,GRANT'
+    #     state: present
+    #     host: '%'
+    #   with_items:
+    #     - "{{ mysql.users }}"
