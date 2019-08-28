@@ -1,0 +1,21 @@
+{
+    "builders": [
+        {   "availability_domain": "{{user `ad`}}",
+            "base_image_ocid": "{{user `base_image_ocid`}}",
+            "compartment_ocid": "{{user `compartment_ocid`}}",
+            "image_name": "vm_mysql-v1.0",
+            "shape": "VM.Standard2.1",
+            "ssh_username": "opc",
+            "subnet_ocid": "{{user `subnet_ocid`}}",
+            "access_cfg_file_account": "{{user `profile`}}",
+            "type": "oracle-oci"
+        }
+    ],
+    "provisioners":[
+        {
+            "type": "ansible",
+            "playbook_file": "./mysql-playbook.yml",
+            "extra_arguments": [ "--extra-vars", "mysql_root_password={{user `mysql_root_password`}}" ]
+        }
+    ]
+}
